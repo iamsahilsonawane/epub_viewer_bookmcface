@@ -14,4 +14,9 @@ class MethodChannelEpubViewerBookmcface extends EpubViewerBookmcfacePlatform {
     final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
     return version;
   }
+
+  @override
+  Future<void> openViewer(String epubPath) async {
+    await methodChannel.invokeMethod<String>('openViewer', epubPath);
+  }
 }

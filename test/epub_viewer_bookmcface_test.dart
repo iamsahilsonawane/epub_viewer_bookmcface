@@ -7,13 +7,18 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockEpubViewerBookmcfacePlatform
     with MockPlatformInterfaceMixin
     implements EpubViewerBookmcfacePlatform {
-
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
+
+  @override
+  Future<void> openViewer(String epubPath) {
+    return Future.value(null);
+  }
 }
 
 void main() {
-  final EpubViewerBookmcfacePlatform initialPlatform = EpubViewerBookmcfacePlatform.instance;
+  final EpubViewerBookmcfacePlatform initialPlatform =
+      EpubViewerBookmcfacePlatform.instance;
 
   test('$MethodChannelEpubViewerBookmcface is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelEpubViewerBookmcface>());
@@ -21,7 +26,8 @@ void main() {
 
   test('getPlatformVersion', () async {
     EpubViewerBookmcface epubViewerBookmcfacePlugin = EpubViewerBookmcface();
-    MockEpubViewerBookmcfacePlatform fakePlatform = MockEpubViewerBookmcfacePlatform();
+    MockEpubViewerBookmcfacePlatform fakePlatform =
+        MockEpubViewerBookmcfacePlatform();
     EpubViewerBookmcfacePlatform.instance = fakePlatform;
 
     expect(await epubViewerBookmcfacePlugin.getPlatformVersion(), '42');

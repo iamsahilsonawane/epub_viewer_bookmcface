@@ -5,4 +5,7 @@ class EpubViewerBookmcface {
   Future<String?> getPlatformVersion() {
     return EpubViewerBookmcfacePlatform.instance.getPlatformVersion();
   }
+  Future<void> openViewer(String epubPath) {
+    return EpubViewerBookmcfacePlatform.instance.openViewer(epubPath);
+  }
 }

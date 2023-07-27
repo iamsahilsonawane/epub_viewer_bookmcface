@@ -26,4 +26,8 @@ abstract class EpubViewerBookmcfacePlatform extends PlatformInterface {
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
+
+  Future<void> openViewer(String epubPath) {
+    throw UnimplementedError('openViewer() has not been implemented.');
+  }
 }

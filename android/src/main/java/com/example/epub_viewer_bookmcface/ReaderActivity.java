@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.CheckBox;
@@ -126,6 +127,8 @@ public class ReaderActivity extends Activity {
         webView.getSettings().setDefaultFixedFontSize(18);
 
         webView.setNetworkAvailable(false);
+        WebSettings settings = webView.getSettings();
+        settings.setAllowFileAccess(true);
 
         final boolean drag_scroll = intent.getBooleanExtra(DRAG_SCROLL,true);
 
@@ -338,15 +341,6 @@ public class ReaderActivity extends Activity {
         }
 
     }
-
-    @Override
-    public void onBackPressed() {
-        finish();
-        Intent main = new Intent(this, BookListActivity.class);
-        main.setAction(BookListActivity.ACTION_SHOW_LAST_STATUS);
-        startActivity(main);
-    }
-
 
     @SuppressLint("SetJavaScriptEnabled")
     private void addEOCPadding() {
