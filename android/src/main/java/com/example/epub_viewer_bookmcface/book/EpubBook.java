@@ -106,7 +106,7 @@ public class EpubBook extends Book {
             String point = bookdat.getString(TOC_CONTENT + i, "");
 
             tocPoints.put(point,label);
-           // Log.d("EPUB", "TOC: " + label + ". File: " + point);
+//            Log.d("EPUB", "TOC: " + label + ". File: " + point + ". TOC CONTENT: " + TOC_CONTENT);
 
         }
     }
@@ -144,7 +144,7 @@ public class EpubBook extends Book {
         if (suri==null) return null;
 
         if (suri.isRelative()) {
-            suri = new Uri.Builder().scheme("file").path(getFullBookContentDir().getPath()).appendPath(suri.getPath()).fragment(suri.getFragment()).build();
+            suri = new Uri.Builder().scheme("file").encodedPath(getFullBookContentDir().getPath()).appendEncodedPath(suri.getPath()).fragment(suri.getFragment()).build();
         }
 
         String file = suri.getLastPathSegment();
@@ -154,7 +154,7 @@ public class EpubBook extends Book {
         String sectionID = null;
 
         for (Map.Entry<String,String> entry: docFiles.entrySet()) {
-            if (file.equals(entry.getValue())) {
+            if (entry.getValue().endsWith(file)) {
                 sectionID = entry.getKey();
             }
         }

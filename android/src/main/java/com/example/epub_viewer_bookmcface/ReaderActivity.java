@@ -777,7 +777,7 @@ public class ReaderActivity extends Activity {
             m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    handleLink(point);
+                    handleLink(point.split("#")[0]);
                     return true;
                 }
             });
