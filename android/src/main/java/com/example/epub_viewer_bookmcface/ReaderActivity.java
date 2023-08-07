@@ -5,6 +5,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
@@ -21,10 +22,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebResourceRequest;
@@ -34,20 +37,30 @@ import android.webkit.WebViewClient;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.epub_viewer_bookmcface.book.Book;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Copyright (C) 2017   Tom Kliethermes
@@ -71,6 +84,20 @@ public class ReaderActivity extends Activity {
     private Book book;
 
     private WebView webView;
+
+    private ConstraintLayout rootView;
+
+    private ImageView toolbarRightIcon;
+    private TextView toolbarTitle;
+    private Toolbar toolbar;
+
+    ImageView lightModeBtn;
+    ImageView darkModeBtn;
+    SeekBar seekBar;
+    TextView chaptersBtn;
+    ConstraintLayout bottomSheet;
+    ImageView icFontIncrease;
+    ImageView icFontDecrease;
 
     public static final String FILENAME = "filename";
     public static final String SCREEN_PAGING = "screenpaging";
@@ -100,6 +127,8 @@ public class ReaderActivity extends Activity {
 
     private boolean hasLightSensor = false;
 
+    boolean isEndReached = false;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,18 +143,31 @@ public class ReaderActivity extends Activity {
         display.getSize(mScreenDim);
 
         SensorManager sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        if (lightSensor != null) {
-            hasLightSensor = true;
-        }
+//        Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+//        if (lightSensor != null) {
+//            hasLightSensor = true;
+//        }
 
-        final ImageButton showMore = findViewById(R.id.control_view_more);
+//        final ImageButton showMore = findViewById(R.id.control_view_more);
 
         webView = findViewById(R.id.page_view);
+        rootView = findViewById(R.id.clRootView);
+        toolbarRightIcon = findViewById(R.id.toolbarRightIcon);
+        toolbarTitle = findViewById(R.id.toolbarTitle);
+        toolbar = findViewById(R.id.toolbar);
+
+        //Set click listener
+        toolbarRightIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showBottomSheet();
+            }
+        });
 
         webView.getSettings().setDefaultFontSize(18);
         webView.getSettings().setDefaultFixedFontSize(18);
-
+       //set background color to dark
+        webView.setBackgroundColor(Color.BLACK);
         webView.setNetworkAvailable(false);
         WebSettings settings = webView.getSettings();
         settings.setAllowFileAccess(true);
@@ -145,8 +187,7 @@ public class ReaderActivity extends Activity {
                 switch (motionEvent.getAction()) {
 
                     case MotionEvent.ACTION_UP:
-
-                        if (drag_scroll) cancelScrollTask();
+//                        if (drag_scroll) cancelScrollTask();
                         //Log.d("TIME", "t " + (System.currentTimeMillis() - time));
                         if (System.currentTimeMillis() - time >TIMEALLOWED) return false;
 
@@ -177,11 +218,11 @@ public class ReaderActivity extends Activity {
                             hideMenu();
 
                             if (currentDimColor!=Color.TRANSPARENT) {
-                                setDimLevel(showMore, Color.LTGRAY);
+//                                setDimLevel(showMore, Color.LTGRAY);
                                 handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        setDimLevel(showMore, currentDimColor);
+//                                        setDimLevel(showMore, currentDimColor);
                                     }
                                 }, 2000);
                             }
@@ -215,6 +256,97 @@ public class ReaderActivity extends Activity {
 
 
         });
+//        if (intent.getBooleanExtra(SCREEN_PAGING, true)) {
+//            webView.setOnTouchListener(new View.OnTouchListener() {
+//                float x, y;
+//                long time;
+//                final long TIMEALLOWED = 300;
+//                final int MINSWIPE = 150;
+//
+//                @Override
+//                public boolean onTouch(View view, MotionEvent motionEvent) {
+//                    float diffx = 0;
+//                    float diffy = 0;
+//
+//                    switch (motionEvent.getAction()) {
+//
+//                        case MotionEvent.ACTION_UP:
+//                            if (System.currentTimeMillis() - time > TIMEALLOWED) return false;
+//
+//                            diffx = motionEvent.getX() - x;
+//                            diffy = motionEvent.getY() - y;
+//                            float absdiffx = Math.abs(diffx);
+//                            float absdiffy = Math.abs(diffy);
+//
+//                            Log.d("Gesture", "isEndReached: " + isEndReached);
+//                            Log.d("Gesture", "absdiffx: " + absdiffx + ", absdiffy: " + absdiffy);
+//                            Log.d("Gesture", "diffx: " + diffx + ", diffy: " + diffy);
+//
+//                            if ((absdiffx > absdiffy && diffx > MINSWIPE) || (absdiffy > absdiffx && diffy > MINSWIPE)) {
+//                                if (isEndReached) {
+//                                    Log.d("Gesture", "Calling prevPage()");
+//                                    prevPage(); // Call prevPage() method when swiping left
+//                                }
+//                            } else if ((absdiffx > absdiffy && diffx < -MINSWIPE) || (absdiffy > absdiffx && diffy < -MINSWIPE)) {
+//                                if (isEndReached) {
+//                                    Log.d("Gesture", "Calling nextPage()");
+//                                    nextPage(); // Call nextPage() method when swiping right
+//                                }
+//                            } else {
+//                                Log.d("Gesture", "No action taken");
+//                                return false;
+//                            }
+//
+//
+//                        case MotionEvent.ACTION_DOWN:
+//                            x = motionEvent.getX();
+//                            y = motionEvent.getY();
+//                            time = System.currentTimeMillis();
+//                            setAwake();
+//                            isEndReached = false; // Reset the end reached flag
+//                            if (y > mScreenDim.y / 3 && x > mScreenDim.x / 3 &&
+//                                    y < mScreenDim.y * 2 / 3 && x < mScreenDim.x * 2 / 3) {
+//                                mkFull();
+//                                hideMenu();
+//
+//                                if (currentDimColor != Color.TRANSPARENT) {
+//                                    handler.postDelayed(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            // setDimLevel(showMore, currentDimColor);
+//                                        }
+//                                    }, 2000);
+//                                }
+//                            }
+//                            return false;
+//
+//                    }
+//
+//                        return false;
+//                }
+//            });
+//
+//            // Set up a listener to track scrolling changes
+//            webView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+//                @Override
+//                public void onScrollChanged() {
+//                    int scrollY = webView.getScrollY();
+//                    int contentHeight = (int) Math.floor(webView.getContentHeight() * webView.getScale());
+//
+//                    // Check if the user is near the end of the content
+//                    if (scrollY >= contentHeight - webView.getHeight()) {
+//                        Log.e(TAG, "onScrollChanged: near end");
+//                        isEndReached = true;
+//                    }
+//                    //check if near top
+//                   else if (scrollY == 0) {
+//                        Log.e(TAG, "onScrollChanged: near top");
+//                        isEndReached = false;
+//                    }
+//                }
+//            });
+//        }
+
 
         webView.setWebViewClient(new WebViewClient() {
 
@@ -242,7 +374,7 @@ public class ReaderActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                // addEOCPadding();
                 try {
-                    restoreBgColor();
+                    restoreBrightness();
                     restoreScrollOffsetDelayed(100);
                 } catch (Throwable t) {
                     Log.e(TAG, t.getMessage(), t);
@@ -251,83 +383,82 @@ public class ReaderActivity extends Activity {
 
         });
 
-
         progressBar = findViewById(R.id.progressBar);
 
-        findViewById(R.id.prev_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                prevPage();
-            }
-        });
-
-        findViewById(R.id.next_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                nextPage();
-            }
-        });
-
-        findViewById(R.id.contents_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showToc();
-                //hideMenu();
-            }
-        });
-
-        findViewById(R.id.zoom_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                selectFontSize();
-                //hideMenu();
-            }
-        });
-        findViewById(R.id.brightness_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showBrightnessControl();
-                //hideMenu();
-            }
-        });
-
-        showMore.setOnClickListener(morelessControls);
-        findViewById(R.id.control_view_less).setOnClickListener(morelessControls);
-
-        fullscreenBox = findViewById(R.id.fullscreen_box);
-
-        fullscreenBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                setFullscreen(b);
-                if (b) {
-                    fullscreenBox.postDelayed(
-                        new Runnable() {
-                              @Override
-                              public void run() {
-                                  mkFull();
-                                  hideMenu();
-                              }
-                        }, 500);
-                } else {
-                    fullscreenBox.postDelayed(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                mkReg();
-                                hideMenu();
-                            }
-                        }, 500);
-                }
-            }
-        });
-
-        findViewById(R.id.fullscreen_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                fullscreenBox.setChecked(!fullscreenBox.isChecked());
-            }
-        });
+//        findViewById(R.id.prev_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                prevPage();
+//            }
+//        });
+//
+//        findViewById(R.id.next_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                nextPage();
+//            }
+//        });
+//
+//        findViewById(R.id.contents_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+////                showToc(chapters);
+//                //hideMenu();
+//            }
+//        });
+//
+//        findViewById(R.id.zoom_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                selectFontSize();
+//                //hideMenu();
+//            }
+//        });
+//        findViewById(R.id.brightness_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                showBrightnessControl();
+//                //hideMenu();
+//            }
+//        });
+//
+//        showMore.setOnClickListener(morelessControls);
+//        findViewById(R.id.control_view_less).setOnClickListener(morelessControls);
+//
+//        fullscreenBox = findViewById(R.id.fullscreen_box);
+//
+//        fullscreenBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+//                setFullscreen(b);
+//                if (b) {
+//                    fullscreenBox.postDelayed(
+//                        new Runnable() {
+//                              @Override
+//                              public void run() {
+//                                  mkFull();
+//                                  hideMenu();
+//                              }
+//                        }, 500);
+//                } else {
+//                    fullscreenBox.postDelayed(
+//                        new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                mkReg();
+//                                hideMenu();
+//                            }
+//                        }, 500);
+//                }
+//            }
+//        });
+//
+//        findViewById(R.id.fullscreen_button).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                fullscreenBox.setChecked(!fullscreenBox.isChecked());
+//            }
+//        });
 
         //findFile();
         String filename = intent.getStringExtra(FILENAME);
@@ -342,6 +473,83 @@ public class ReaderActivity extends Activity {
 
     }
 
+    public void showBottomSheet(
+
+    ) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_bottom_sheet, rootView, false);
+
+        lightModeBtn = view.findViewById(R.id.ivLightMode);
+        darkModeBtn = view.findViewById(R.id.ivDarkMode);
+        seekBar = view.findViewById(R.id.seekFontSize);
+        chaptersBtn = view.findViewById(R.id.tvChapters);
+        bottomSheet = view.findViewById(R.id.bottomSheet);
+        icFontIncrease = view.findViewById(R.id.ivBigTextSize);
+        icFontDecrease = view.findViewById(R.id.ivSmallTextSize);
+
+        String chapter = getChapterFromUri(book.getCurrentSection());
+        if (chapter!=null) {
+            chaptersBtn.setText(chapter);
+        }
+
+        setBottomSheetColor(); //should only be called after the vars are set
+
+        darkModeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                applyDarkMode();
+                setBottomSheetColor();
+            }
+        });
+
+        lightModeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                applyLightMode();
+                setBottomSheetColor();
+            }
+        });
+
+        chaptersBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showToc(chaptersBtn);
+            }
+        });
+        seekBar.setMax(30);
+        final int defsize = webView.getSettings().getDefaultFontSize();
+        int minsize = webView.getSettings().getMinimumFontSize();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            seekBar.setMin(minsize);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            seekBar.setProgress(defsize);
+        }
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+               int seekValue = ((int)Math.round(progress / 5))*5;
+                seekBar.setProgress(seekValue);
+                setFontSize(seekValue);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+
+
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
+    }
+
+
     @SuppressLint("SetJavaScriptEnabled")
     private void addEOCPadding() {
         //Add padding to end of section to reduce confusing partial page scrolls
@@ -350,43 +558,43 @@ public class ReaderActivity extends Activity {
         webView.getSettings().setJavaScriptEnabled(false);
     }
 
-    private final View.OnClickListener morelessControls = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            View v = findViewById(R.id.slide_menu);
-            if (v.getVisibility()==View.GONE) {
-                showMenu();
-            } else {
-                hideMenu();
-            }
-        }
-    };
-    private void setFullscreenMode() {
-        if (book!=null && book.hasDataDir()) {
-            setFullscreen(book.getFlag(FULLSCREEN, true));
-        }
-    }
+//    private final View.OnClickListener morelessControls = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            View v = findViewById(R.id.slide_menu);
+//            if (v.getVisibility()==View.GONE) {
+//                showMenu();
+//            } else {
+//                hideMenu();
+//            }
+//        }
+//    };
+//    private void setFullscreenMode() {
+//        if (book!=null && book.hasDataDir()) {
+//            setFullscreen(book.getFlag(FULLSCREEN, true));
+//        }
+//    }
 
-    private void setFullscreen(boolean full) {
-        if (book!=null && book.hasDataDir()) book.setFlag(FULLSCREEN, full);
-
-        fullscreenBox.setChecked(full);
-    }
+//    private void setFullscreen(boolean full) {
+//        if (book!=null && book.hasDataDir()) book.setFlag(FULLSCREEN, full);
+//
+//        fullscreenBox.setChecked(full);
+//    }
 
     private void showMenu() {
-        View v = findViewById(R.id.slide_menu);
-        v.setVisibility(View.VISIBLE);
-        findViewById(R.id.control_view_more).setVisibility(View.GONE);
-        findViewById(R.id.control_view_less).setVisibility(View.VISIBLE);
-        mkReg();
+//        View v = findViewById(R.id.slide_menu);
+//        v.setVisibility(View.VISIBLE);
+//        findViewById(R.id.control_view_more).setVisibility(View.GONE);
+//        findViewById(R.id.control_view_less).setVisibility(View.VISIBLE);
+//        mkReg();
     }
 
     private void hideMenu() {
-        View v = findViewById(R.id.slide_menu);
-        v.setVisibility(View.GONE);
-        findViewById(R.id.control_view_more).setVisibility(View.VISIBLE);
-        findViewById(R.id.control_view_less).setVisibility(View.GONE);
-        mkFull();
+//        View v = findViewById(R.id.slide_menu);
+//        v.setVisibility(View.GONE);
+//        findViewById(R.id.control_view_more).setVisibility(View.VISIBLE);
+//        findViewById(R.id.control_view_less).setVisibility(View.GONE);
+//        mkFull();
     }
 
     int scrollTaskCounter = 0;
@@ -556,6 +764,8 @@ public class ReaderActivity extends Activity {
                 Log.d(TAG, "File " + file);
                 if (ract.book!=null) {
                     ract.book.load(file);
+
+                    ract.toolbarTitle.setText(ract.book.getTitle());
                     return ract.book;
                 }
 
@@ -601,7 +811,7 @@ public class ReaderActivity extends Activity {
                     } else {
                         ract.mkReg();
                     }
-                    ract.setFullscreenMode();
+//                    ract.setFullscreenMode();
                     ract.setAwake();
                 }
             } catch (Throwable e) {
@@ -617,10 +827,34 @@ public class ReaderActivity extends Activity {
         if (uri !=null) {
             Log.d(TAG, "trying to load " + uri);
 
-            //book.clearSectionOffset();
             webView.loadUrl(uri.toString());
+
+            String chapter = getChapterFromUri(uri);
+            if (chapter!=null) {
+                toolbarTitle.setText(chapter);
+            }
         }
     }
+
+    private String getChapterFromUri(Uri uri) {
+        Map<String, String> toc = book.getToc();
+
+        for (Map.Entry<String, String> entry : toc.entrySet()) {
+            String key = entry.getKey().split("#")[0];
+
+            if (key.contains("Text/")) {
+                key = key.split("Text/")[1];
+            }
+
+            if (key.equalsIgnoreCase(uri.getLastPathSegment())) {
+                Log.e(TAG, "showUri: found: " + entry.getValue());
+                return entry.getValue();
+            }
+        }
+
+        return null;
+    }
+
 
     private void handleLink(String clickedLink) {
         if (clickedLink!=null) {
@@ -651,42 +885,42 @@ public class ReaderActivity extends Activity {
         webView.getSettings().setDefaultFixedFontSize(size);
     }
 
-    private void selectFontSize() {
-        final int defsize = webView.getSettings().getDefaultFontSize();
-        int minsize = webView.getSettings().getMinimumFontSize();
-        final float scale = getResources().getDisplayMetrics().density;
-
-
-       // Log.d(TAG, "def " + defsize + " " + scale);
-        final PopupMenu sizemenu = new PopupMenu(this, findViewById(R.id.zoom_button));
-        for (int size=minsize; size<=36; size+=2) {
-            final int s = size;
-
-            MenuItem mi = sizemenu.getMenu().add(" "+size);
-            mi.setCheckable(true);
-            mi.setChecked(size==defsize);
-
-            mi.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    Log.d(TAG, "def " + (defsize-s));
-                    int scrolloffset = (int)(-webView.getScrollY()*(defsize - s)/scale/2.7);
-                    Log.d(TAG, "scrollby " + scrolloffset);
-
-                    setFontSize(s);
-
-                    //attempt to adjust the scroll to keep the same text position.
-                    //  needs much work
-                    webView.scrollBy(0, scrolloffset);
-                    sizemenu.dismiss();
-                    return true;
-                }
-            });
-        }
-        sizemenu.show();
-
-
-    }
+//    private void selectFontSize() {
+//        final int defsize = webView.getSettings().getDefaultFontSize();
+//        int minsize = webView.getSettings().getMinimumFontSize();
+//        final float scale = getResources().getDisplayMetrics().density;
+//
+//
+//       // Log.d(TAG, "def " + defsize + " " + scale);
+////        final PopupMenu sizemenu = new PopupMenu(this, findViewById(R.id.zoom_button));
+//        for (int size=minsize; size<=36; size+=2) {
+//            final int s = size;
+//
+//            MenuItem mi = sizemenu.getMenu().add(" "+size);
+//            mi.setCheckable(true);
+//            mi.setChecked(size==defsize);
+//
+//            mi.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//                @Override
+//                public boolean onMenuItemClick(MenuItem menuItem) {
+//                    Log.d(TAG, "def " + (defsize-s));
+//                    int scrolloffset = (int)(-webView.getScrollY()*(defsize - s)/scale/2.7);
+//                    Log.d(TAG, "scrollby " + scrolloffset);
+//
+//                    setFontSize(s);
+//
+//                    //attempt to adjust the scroll to keep the same text position.
+//                    //  needs much work
+//                    webView.scrollBy(0, scrolloffset);
+//                    sizemenu.dismiss();
+//                    return true;
+//                }
+//            });
+//        }
+//        sizemenu.show();
+//
+//
+//    }
 
     private void mkFull() {
 
@@ -725,7 +959,7 @@ public class ReaderActivity extends Activity {
             }
             timer = new Timer();
         }
-        restoreBgColor();
+//        restoreBgColor();
     }
 
     @Override
@@ -767,10 +1001,11 @@ public class ReaderActivity extends Activity {
 //        //if (hasFocus) mkFull();
 //    }
 
-    private void showToc() {
+    private void showToc(TextView chapters) {
         Map<String,String> tocmap = book.getToc();
-        PopupMenu tocmenu = new PopupMenu(this, findViewById(R.id.contents_button));
+        PopupMenu tocmenu = new PopupMenu(this, chapters);
         for (final String point: tocmap.keySet()) {
+            Log.e(TAG, "showToc: point" + point );
             String text = tocmap.get(point);
             MenuItem m = tocmenu.getMenu().add(text);
             //Log.d("EPUB", "TOC2: " + text + ". File: " + point);
@@ -778,6 +1013,11 @@ public class ReaderActivity extends Activity {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
                     handleLink(point.split("#")[0]);
+                    String chapter = getChapterFromUri(book.getCurrentSection());
+                    if (chapter!=null) {
+                        chaptersBtn.setText(chapter);
+                    }
+
                     return true;
                 }
             });
@@ -944,89 +1184,100 @@ public class ReaderActivity extends Activity {
     }
 
 
-    private void showBrightnessControl() {
-        if (book==null) return;
+//    private void showBrightnessControl() {
+//        if (book==null) return;
+//
+//        PopupMenu bmenu = new PopupMenu(this, findViewById(R.id.brightness_button));
+//        int bg = book.getBackgroundColor();
+//
+//        MenuItem norm = bmenu.getMenu().add(R.string.book_default);
+//
+//        if (bg==Integer.MAX_VALUE) {
+//            norm.setCheckable(true);
+//            norm.setChecked(true);
+//        }
+//
+//        norm.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem item) {
+//                unlistenLight();
+//                saveScrollOffset();
+//                book.clearBackgroundColor();
+//                resetColor();
+//                webView.reload();
+//                return true;
+//            }
+//        });
+//
+//
+//        if (hasLightSensor) {
+//            MenuItem auto = bmenu.getMenu().add(getString(R.string.auto_bright));
+//
+//            if (bg == Color.TRANSPARENT) {
+//                auto.setCheckable(true);
+//                auto.setChecked(true);
+//            }
+//
+//            auto.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//                @Override
+//                public boolean onMenuItemClick(MenuItem item) {
+//                    book.setBackgroundColor(Color.TRANSPARENT);
+//                    restoreBgColor();
+//                    return true;
+//                }
+//            });
+//
+//        }
+//
+//
+//        for (int i = 0; i<7; i++) {
+//            int b = i*33;
+//            final int color = Color.argb(255, 255-b, 250-b, 250-i-b);
+//            String strcolor;
+//            switch (i) {
+//                case 0:
+//                    strcolor = (i+1) + " - " + getString(R.string.bright);
+//                    break;
+//                case 3:
+//                    strcolor = (i+1) + " - " + getString(R.string.bright_medium);
+//                    break;
+//                case 6:
+//                    strcolor = (i+1) + " - " + getString(R.string.dim);
+//                    break;
+//                default:
+//                    strcolor = (i+1) + "";
+//
+//            }
+//
+//            MenuItem m = bmenu.getMenu().add(strcolor);
+//            m.setIcon(new ColorDrawable(color));
+//            if (bg==color) {
+//                m.setCheckable(true);
+//                m.setChecked(true);
+//            }
+//
+//            m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//                @Override
+//                public boolean onMenuItemClick(MenuItem item) {
+//                    unlistenLight();
+//                    book.setBackgroundColor(color);
+//                    restoreBgColor();
+//                    return true;
+//                }
+//            });
+//        }
+//        bmenu.show();
+//    }
 
-        PopupMenu bmenu = new PopupMenu(this, findViewById(R.id.brightness_button));
-        int bg = book.getBackgroundColor();
-
-        MenuItem norm = bmenu.getMenu().add(R.string.book_default);
-
-        if (bg==Integer.MAX_VALUE) {
-            norm.setCheckable(true);
-            norm.setChecked(true);
-        }
-
-        norm.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                unlistenLight();
-                saveScrollOffset();
-                book.clearBackgroundColor();
-                resetColor();
-                webView.reload();
-                return true;
+    private void restoreBrightness() {
+        unlistenLight();
+        if (book!=null && book.hasDataDir()) {
+            if ( book.isDarkMode()) {
+                applyDarkMode();
+            } else {
+                applyLightMode();
             }
-        });
-
-
-        if (hasLightSensor) {
-            MenuItem auto = bmenu.getMenu().add(getString(R.string.auto_bright));
-
-            if (bg == Color.TRANSPARENT) {
-                auto.setCheckable(true);
-                auto.setChecked(true);
-            }
-
-            auto.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    book.setBackgroundColor(Color.TRANSPARENT);
-                    restoreBgColor();
-                    return true;
-                }
-            });
-
-        }
-
-
-        for (int i = 0; i<7; i++) {
-            int b = i*33;
-            final int color = Color.argb(255, 255-b, 250-b, 250-i-b);
-            String strcolor;
-            switch (i) {
-                case 0:
-                    strcolor = (i+1) + " - " + getString(R.string.bright);
-                    break;
-                case 3:
-                    strcolor = (i+1) + " - " + getString(R.string.bright_medium);
-                    break;
-                case 6:
-                    strcolor = (i+1) + " - " + getString(R.string.dim);
-                    break;
-                default:
-                    strcolor = (i+1) + "";
-
-            }
-
-            MenuItem m = bmenu.getMenu().add(strcolor);
-            m.setIcon(new ColorDrawable(color));
-            if (bg==color) {
-                m.setCheckable(true);
-                m.setChecked(true);
-            }
-
-            m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    unlistenLight();
-                    book.setBackgroundColor(color);
-                    restoreBgColor();
-                    return true;
-                }
-            });
-        }
-        bmenu.show();
+         }
     }
 
     private void restoreBgColor() {
@@ -1062,16 +1313,10 @@ public class ReaderActivity extends Activity {
         currentDimColor = color;
         try {
 
-            ViewGroup controls = findViewById(R.id.controls_layout);
-            setDimLevel(controls, color);
-            for (int i = 0; i < controls.getChildCount(); i++) {
-                View button = controls.getChildAt(i);
-                setDimLevel(button, color);
-            }
-
-//            ViewGroup extracontrols = findViewById(R.id.slide_menu);
-//            for (int i = 0; i < extracontrols.getChildCount(); i++) {
-//                View button = extracontrols.getChildAt(i);
+//            ViewGroup controls = findViewById(R.id.controls_layout);
+//            setDimLevel(controls, color);
+//            for (int i = 0; i < controls.getChildCount(); i++) {
+//                View button = controls.getChildAt(i);
 //                setDimLevel(button, color);
 //            }
 
@@ -1085,6 +1330,101 @@ public class ReaderActivity extends Activity {
                 webView.evaluateJavascript("(function(){var newSS, styles='* { background: " + String.format("#%6X", color & 0xFFFFFF) + " ! important; color: black !important } :link, :link * { color: #000088 !important } :visited, :visited * { color: #44097A !important }'; if(document.createStyleSheet) {document.createStyleSheet(\"javascript:'\"+styles+\"'\");} else { newSS=document.createElement('link'); newSS.rel='stylesheet'; newSS.href='data:text/css,'+escape(styles); document.getElementsByTagName(\"head\")[0].appendChild(newSS); } })();", null);
                 webView.getSettings().setJavaScriptEnabled(false);
             }
+        } catch (Throwable t) {
+            Log.e(TAG, t.getMessage(), t);
+            Toast.makeText(this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void applyDarkMode() {
+        try {
+            webView.getSettings().setJavaScriptEnabled(true);
+            String javascript = "(function(){" +
+                    "var newSS, styles='* { background: #1E1E1E !important; color: #E0E0E0 !important } :link, :link * { color: #B8C9FF !important } :visited, :visited * { color: #D89CF6 !important }';" +
+                    "if(document.createStyleSheet) {" +
+                    "document.createStyleSheet(\"javascript:'\"+styles+\"'\");" +
+                    "} else {" +
+                    "newSS=document.createElement('style');" +
+                    "newSS.innerText=styles;" +
+                    "document.getElementsByTagName('head')[0].appendChild(newSS);" +
+                    "}" +
+                    "})();";
+
+            webView.evaluateJavascript(javascript, null);
+            webView.getSettings().setJavaScriptEnabled(false);
+            book.setBrightnessMode(true);
+
+            int lightForeground = Color.parseColor("#F0F0F0");
+            int darkBackground = Color.parseColor("#303030");
+
+            toolbar.setBackgroundColor(darkBackground);
+            toolbarTitle.setTextColor(lightForeground);
+            toolbarRightIcon.setColorFilter(Color.parseColor("#E0E0E0"));
+        } catch (Throwable t) {
+            Log.e(TAG, t.getMessage(), t);
+            Toast.makeText(this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /// Sets color based on theme
+    private void setBottomSheetColor() {
+        if (book.isDarkMode()) {
+            int lightForeground = Color.parseColor("#F0F0F0");
+            int darkBackground = Color.parseColor("#303030");
+
+            darkModeBtn.setColorFilter(Color.parseColor("#E0E0E0"));
+            lightModeBtn.setColorFilter(Color.parseColor("#E0E0E0"));
+            icFontIncrease.setColorFilter(Color.parseColor("#E0E0E0"));
+            icFontDecrease.setColorFilter(Color.parseColor("#E0E0E0"));
+
+            bottomSheet.setBackgroundColor(darkBackground);
+            chaptersBtn.setTextColor(lightForeground);
+            chaptersBtn.setBackgroundColor(darkBackground);
+            seekBar.setProgressBackgroundTintList(ColorStateList.valueOf(darkBackground));
+            seekBar.setThumbTintList(ColorStateList.valueOf(lightForeground));
+        } else {
+            int lightForeground = Color.parseColor("#000000");
+            int lightBackground = Color.parseColor("#F0F0F0");
+
+            darkModeBtn.setColorFilter(Color.parseColor("#000000"));
+            lightModeBtn.setColorFilter(Color.parseColor("#000000"));
+            icFontIncrease.setColorFilter(Color.parseColor("#000000"));
+            icFontDecrease.setColorFilter(Color.parseColor("#000000"));
+
+            bottomSheet.setBackgroundColor(lightBackground);
+            chaptersBtn.setTextColor(lightForeground);
+            chaptersBtn.setBackgroundColor(lightBackground);
+            seekBar.setProgressBackgroundTintList(ColorStateList.valueOf(lightBackground));
+            seekBar.setThumbTintList(ColorStateList.valueOf(lightForeground));
+        }
+    }
+
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void applyLightMode() {
+        try {
+            webView.getSettings().setJavaScriptEnabled(true);
+            String javascript = "(function(){" +
+                    "var newSS, styles='* { background: white !important; color: black !important } :link, :link * { color: #000088 !important } :visited, :visited * { color: #44097A !important }';" +
+                    "if(document.createStyleSheet) {" +
+                    "document.createStyleSheet(\"javascript:'\"+styles+\"'\");" +
+                    "} else {" +
+                    "newSS=document.createElement('link');" +
+                    "newSS.rel='stylesheet';" +
+                    "newSS.href='data:text/css,'+escape(styles);" +
+                    "document.getElementsByTagName(\"head\")[0].appendChild(newSS);" +
+                    "}" +
+                    "})();";
+
+            webView.evaluateJavascript(javascript, null);
+            webView.getSettings().setJavaScriptEnabled(false);
+            book.setBrightnessMode(false);
+
+            toolbar.setBackgroundColor(Color.WHITE);
+            toolbarTitle.setTextColor(Color.BLACK);
+            toolbarRightIcon.setColorFilter(Color.BLACK);
         } catch (Throwable t) {
             Log.e(TAG, t.getMessage(), t);
             Toast.makeText(this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();

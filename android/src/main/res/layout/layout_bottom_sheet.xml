@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/bottomSheet"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#ffffff">
+
+    <ImageView
+        android:id="@+id/ivLightMode"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/baseline_light_mode_24"
+        app:layout_constraintTop_toTopOf="parent"
+        android:paddingVertical="12dp"
+        app:layout_constraintEnd_toStartOf="@+id/ivDarkMode"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/tvChapters"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="--- Select Chapter ---"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:textStyle="normal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:paddingVertical="20dp"
+        app:layout_constraintTop_toBottomOf="@id/ivLightMode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <View
+        android:id="@+id/viewDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvChapters"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="#000000"/>
+
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@+id/ivLightMode"
+        app:layout_constraintBottom_toBottomOf="@id/ivLightMode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="#000000"/>
+
+    <ImageView
+        android:id="@+id/ivDarkMode"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:src="@drawable/baseline_dark_mode_24"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ivLightMode"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="dark mode button" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        app:layout_constraintTop_toBottomOf="@+id/ivLightMode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="#000000"/>
+
+
+    <ImageView
+        android:id="@+id/ivSmallTextSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/twotone_text_decrease_24"
+        android:layout_marginStart="16dp"
+        app:layout_constraintTop_toTopOf="@id/seekFontSize"
+        app:layout_constraintBottom_toBottomOf="@id/seekFontSize"
+        app:layout_constraintStart_toStartOf="parent"
+        android:contentDescription="TODO" />
+
+    <ImageView
+        android:id="@+id/ivBigTextSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/baseline_text_increase_24"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintTop_toTopOf="@id/seekFontSize"
+        app:layout_constraintBottom_toBottomOf="@id/seekFontSize"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="TODO" />
+
+
+    <SeekBar
+        android:id="@+id/seekFontSize"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="0dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="16dp"
+        android:progressBackgroundTint="#D3CACA"
+        android:progressTint="#2196F3"
+        android:layout_marginHorizontal="16dp"
+        android:secondaryProgressTint="#2196F3"
+        app:layout_constraintStart_toEndOf="@id/ivSmallTextSize"
+        app:layout_constraintEnd_toStartOf="@id/ivBigTextSize"
+        app:layout_constraintTop_toBottomOf="@id/tvChapters"  />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        app:layout_constraintTop_toBottomOf="@id/seekFontSize"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

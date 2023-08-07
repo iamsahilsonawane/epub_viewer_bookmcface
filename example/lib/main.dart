@@ -61,7 +61,7 @@ class MyAppState extends State<MyApp> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: filePath.isNotEmpty ? null : download,
+                      onPressed: download,
                       child: const Text('Download epub'),
                     ),
                     ElevatedButton(
@@ -76,9 +76,9 @@ class MyAppState extends State<MyApp> {
   }
 
   void showViewer() {
-    plugin.openViewer(
-        "/storage/emulated/0/Download/02. Those-who-accuse-you.epub");
-    // plugin.openViewer(filePath);
+    // plugin.openViewer(
+    //     "/storage/emulated/0/Download/02. Those-who-accuse-you.epub");
+    plugin.openViewer(filePath);
   }
 
   Future<void> startDownload() async {
@@ -89,13 +89,13 @@ class MyAppState extends State<MyApp> {
         ? await getApplicationDocumentsDirectory()
         : await getApplicationDocumentsDirectory();
 
-    String path = '${appDocDir.path}/sample.epub';
+    String path = '${appDocDir.path}/sample2.epub';
     File file = File(path);
 
     if (!File(path).existsSync()) {
       await file.create();
       await dio.download(
-        "https://vocsyinfotech.in/envato/cc/flutter_ebook/uploads/22566_The-Racketeer---John-Grisham.epub",
+        "https://firebasestorage.googleapis.com/v0/b/dag-bible.appspot.com/o/books%2F19.%20Transform-your-pastoral-ministry.epub?alt=media&token=ca53d0b4-fbb3-4855-92fc-9f83d4a3ddf9",
         path,
         deleteOnError: true,
         onReceiveProgress: (receivedBytes, totalBytes) {

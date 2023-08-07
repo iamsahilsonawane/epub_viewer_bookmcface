@@ -35,6 +35,9 @@ public abstract class Book {
     private static final String SECTION_ID_OFFSET = "sectionIDOffset";
     private static final String SECTION_ID = "sectionID";
     private static final String BG_COLOR = "BG_COLOR";
+
+    private static final String BRIGHTNESS_MODE = "BRIGHTNESS_MODE";
+
     private String title;
     private File file;
 
@@ -155,6 +158,18 @@ public abstract class Book {
     }
 
 
+    public void setBrightnessMode(boolean isDarkMode) {
+        data.edit().putBoolean(BRIGHTNESS_MODE, isDarkMode).apply();
+    }
+
+    public boolean isDarkMode() {
+        return data.getBoolean(BRIGHTNESS_MODE, false);
+    }
+
+    public void clearBrightnessMode() {
+        data.edit().remove(BRIGHTNESS_MODE).apply();
+    }
+
     public void setFlag(String key, boolean value) {
         data.edit().putBoolean(key, value).apply();
     }
@@ -215,8 +230,6 @@ public abstract class Book {
         }
         return null;
     }
-
-
     private void saveCurrentSectionID() {
         Log.d("Book", "saving section " + currentSectionIDPos);
         data.edit().putInt(SECTION_ID, currentSectionIDPos).apply();
@@ -334,8 +347,6 @@ public abstract class Book {
     SharedPreferences getSharedPreferences() {
         return data;
     }
-
-
 
     public static String getFileExtensionRX() {
         return ".*\\.(epub|txt|html?)";

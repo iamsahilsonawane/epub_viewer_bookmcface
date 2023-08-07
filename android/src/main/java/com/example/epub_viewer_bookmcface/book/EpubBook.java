@@ -219,9 +219,7 @@ public class EpubBook extends Book {
                 }
             }
         }
-
         bookdat.apply();
-
     }
 
     @Override
