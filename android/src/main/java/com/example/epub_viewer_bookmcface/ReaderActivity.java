@@ -9,6 +9,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -179,6 +180,8 @@ public class ReaderActivity extends Activity {
             long time;
             final long TIMEALLOWED = 300;
             final int MINSWIPE = 150;
+
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 float diffx = 0;
@@ -187,10 +190,6 @@ public class ReaderActivity extends Activity {
                 switch (motionEvent.getAction()) {
 
                     case MotionEvent.ACTION_UP:
-//                        if (drag_scroll) cancelScrollTask();
-                        //Log.d("TIME", "t " + (System.currentTimeMillis() - time));
-                        if (System.currentTimeMillis() - time >TIMEALLOWED) return false;
-
                         diffx = motionEvent.getX() - x;
                         diffy = motionEvent.getY() - y;
                         float absdiffx = Math.abs(diffx);
@@ -205,9 +204,10 @@ public class ReaderActivity extends Activity {
                             return false;
                         }
 
+                        return false;
+
 
                     case MotionEvent.ACTION_DOWN:
-                        if (drag_scroll) cancelScrollTask();
                         x = motionEvent.getX();
                         y = motionEvent.getY();
                         time = System.currentTimeMillis();
@@ -229,29 +229,85 @@ public class ReaderActivity extends Activity {
                         }
                         return false;
 
-                    case MotionEvent.ACTION_MOVE:
-
-                        if (drag_scroll) {
-                            diffy = motionEvent.getY() - y;
-
-                            if (Math.abs(diffy) > 30) {
-                                if (System.currentTimeMillis() - time > TIMEALLOWED * 1.5) {
-                                    scrollDir = (int) ((-diffy / webView.getHeight()) * webView.getSettings().getDefaultFontSize() * 5);
-                                    startScrollTask();
-                                    webView.clearMatches();
-                                }
-                            } else {
-                                cancelScrollTask();
-                            }
-                        }
-
-                        return true;
-
                 }
 
 
-                return true;
+                return false;
             }
+
+//            @Override
+//            public boolean onTouch(View view, MotionEvent motionEvent) {
+//                float diffx = 0;
+//                float diffy = 0;
+//
+//                switch (motionEvent.getAction()) {
+//
+//                    case MotionEvent.ACTION_UP:
+////                        if (drag_scroll) cancelScrollTask();
+//                        //Log.d("TIME", "t " + (System.currentTimeMillis() - time));
+//                        if (System.currentTimeMillis() - time >TIMEALLOWED) return false;
+//
+//                        diffx = motionEvent.getX() - x;
+//                        diffy = motionEvent.getY() - y;
+//                        float absdiffx = Math.abs(diffx);
+//                        float absdiffy = Math.abs(diffy);
+//
+//
+//                        if ((absdiffx>absdiffy && diffx>MINSWIPE) || (absdiffy>absdiffx && diffy>MINSWIPE)) {
+//                            prevPage();
+//                        } else if ((absdiffx>absdiffy && diffx<-MINSWIPE) || (absdiffy>absdiffx && diffy<-MINSWIPE)) {
+//                            nextPage();
+//                        } else {
+//                            return false;
+//                        }
+//
+//
+//                    case MotionEvent.ACTION_DOWN:
+//                        if (drag_scroll) cancelScrollTask();
+//                        x = motionEvent.getX();
+//                        y = motionEvent.getY();
+//                        time = System.currentTimeMillis();
+//                        setAwake();
+//                        if (y>mScreenDim.y/3 && x>mScreenDim.x/3 &&
+//                                y<mScreenDim.y*2/3 && x<mScreenDim.x*2/3) {
+//                            mkFull();
+//                            hideMenu();
+//
+//                            if (currentDimColor!=Color.TRANSPARENT) {
+////                                setDimLevel(showMore, Color.LTGRAY);
+//                                handler.postDelayed(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+////                                        setDimLevel(showMore, currentDimColor);
+//                                    }
+//                                }, 2000);
+//                            }
+//                        }
+//                        return false;
+//
+//                    case MotionEvent.ACTION_MOVE:
+//
+//                        if (drag_scroll) {
+//                            diffy = motionEvent.getY() - y;
+//
+//                            if (Math.abs(diffy) > 30) {
+//                                if (System.currentTimeMillis() - time > TIMEALLOWED * 1.5) {
+//                                    scrollDir = (int) ((-diffy / webView.getHeight()) * webView.getSettings().getDefaultFontSize() * 5);
+//                                    startScrollTask();
+//                                    webView.clearMatches();
+//                                }
+//                            } else {
+//                                cancelScrollTask();
+//                            }
+//                        }
+//
+//                        return true;
+//
+//                }
+//
+//
+//                return true;
+//            }
 
 
 
@@ -374,6 +430,23 @@ public class ReaderActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                // addEOCPadding();
                 try {
+                    Log.d(TAG, "onPageFinished: setting margin");
+                    webView.getSettings().setJavaScriptEnabled(true);
+//                    String jsCode = "javascript:(function() { " +
+//                            "var style = document.createElement('style'); " +
+//                            "style.innerHTML = 'body { margin: 20px; line-height: 1.5; text-align: left; letter-spacing: 0.02em}'; " +
+//                            "document.head.appendChild(style); })();";
+
+                    String jsCode = "javascript:(function() { " +
+                            "var style = document.createElement('style'); " +
+                            "style.innerHTML = '@font-face { font-family: \"Merriweather\"; src: url(\"file:///android_asset/Merriweather-Regular.ttf\"); } " +
+                            "body { font-family: \"Merriweather\", serif; margin: 20px; line-height: 1.5; text-align: left; letter-spacing: 0.02em }'; " +
+                            "document.head.appendChild(style); })();";
+
+
+                    webView.loadUrl(jsCode);
+                    webView.getSettings().setJavaScriptEnabled(false);
+
                     restoreBrightness();
                     restoreScrollOffsetDelayed(100);
                 } catch (Throwable t) {
@@ -636,7 +709,7 @@ public class ReaderActivity extends Activity {
     private void prevPage() {
         isPagingDown = false;
         if(webView.canScrollVertically(-1)) {
-            webView.pageUp(false);
+//            webView.pageUp(false);
             //webView.scrollBy(0,-webView.getHeight()-14);
         } else {
             isPagingUp = true;
@@ -650,13 +723,11 @@ public class ReaderActivity extends Activity {
     private void nextPage() {
         isPagingUp = false;
         if(webView.canScrollVertically(1)) {
-            webView.pageDown(false);
+//            webView.pageDown(false);
             //webView.scrollBy(0,webView.getHeight()-14);
         } else {
             isPagingDown = true;
             if (book!=null) showUri(book.getNextSection());
-
-
         }
         //saveScrollOffsetDelayed(1500);
         hideMenu();
@@ -698,8 +769,8 @@ public class ReaderActivity extends Activity {
             webView.scrollTo(0, spos);
             Log.d(TAG, "restoreScrollOffset " + spos);
         } else if (isPagingUp){
-            webView.pageDown(true);
-            //webView.scrollTo(0,webView.getContentHeight());
+//            webView.pageDown(true);
+            webView.scrollTo(0,webView.getContentHeight());
         } else if (isPagingDown){
             webView.pageUp(true);
         }
@@ -891,7 +962,7 @@ public class ReaderActivity extends Activity {
 //        final float scale = getResources().getDisplayMetrics().density;
 //
 //
-//       // Log.d(TAG, "def " + defsize + " " + scale);
+//       // Log.d(TAG, "def " + defsize  " " + scale);
 ////        final PopupMenu sizemenu = new PopupMenu(this, findViewById(R.id.zoom_button));
 //        for (int size=minsize; size<=36; size+=2) {
 //            final int s = size;
