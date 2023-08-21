@@ -768,16 +768,10 @@ public class ReaderActivity extends Activity {
         if (spos>=0) {
             webView.scrollTo(0, spos);
             Log.d(TAG, "restoreScrollOffset " + spos);
-        } else if (isPagingUp){
-//            webView.pageDown(true);
-            webView.scrollTo(0,webView.getContentHeight());
-        } else if (isPagingDown){
-            webView.pageUp(true);
+        } else if (isPagingUp) {
+            webView.scrollTo(0, 1000000000);
         }
-        isPagingUp = false;
-        isPagingDown = false;
     }
-
     private void loadFile(File file) {
 
         webView.loadData("Loading " + file.getPath(),"text/plain", "utf-8");
