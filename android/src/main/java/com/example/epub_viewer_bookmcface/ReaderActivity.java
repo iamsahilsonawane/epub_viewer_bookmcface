@@ -432,17 +432,11 @@ public class ReaderActivity extends Activity {
                 try {
                     Log.d(TAG, "onPageFinished: setting margin");
                     webView.getSettings().setJavaScriptEnabled(true);
-//                    String jsCode = "javascript:(function() { " +
-//                            "var style = document.createElement('style'); " +
-//                            "style.innerHTML = 'body { margin: 20px; line-height: 1.5; text-align: left; letter-spacing: 0.02em}'; " +
-//                            "document.head.appendChild(style); })();";
-
                     String jsCode = "javascript:(function() { " +
                             "var style = document.createElement('style'); " +
                             "style.innerHTML = '@font-face { font-family: \"Merriweather\"; src: url(\"file:///android_asset/Merriweather-Regular.ttf\"); } " +
                             "body { font-family: \"Merriweather\", serif; margin: 20px; line-height: 1.5; text-align: left; letter-spacing: 0.02em }'; " +
                             "document.head.appendChild(style); })();";
-
 
                     webView.loadUrl(jsCode);
                     webView.getSettings().setJavaScriptEnabled(false);
